@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosaic Image</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="mosaicCanvas"></canvas>
+
+    <script>
+        // Listen for messages from the parent window (Wix)
+        window.addEventListener("message", (event) => {
+            // Ensure you only accept messages from the correct origin (replace 'your-site-origin' with the actual origin)
+            //if (event.origin !== "your-site-origin") return;
+
+            const imageUrls = event.data; // Get the image URLs passed from Wix
+            generateMosaic(imageUrls);
+        });
+
+        function generateMosaic(imageUrls) {
+            // Set up canvas and context
+            const canvas = document.getElementById("mosaicCanvas");
+            const ctx = canvas.getContext("2d");
+
+            const imageWidth = 100;
+            const imageHeight = 100;
+            const gap = 10;
+            const numColumns = 5;
+
+            // Calculate the canvas size
+            const numRows = Math.ceil(imageUrls.length / numColumns);
+            canvas.width = numColumns * (imageWidth + gap) - gap;
+            canvas.height = numRows * (imageHeight + gap) - gap;
+
+            let x = 0;
+            let y = 0;
+
+            // Loop through the image URLs and draw each image onto the canvas
+            imageUrls.forEach((url, index) => {
+                const img = new Image();
+                img.onload = () => {
+                    ctx.drawImage(img, x, y, imageWidth, imageHeight);
+
+                    x += imageWidth + gap;
+                    if (x >= canvas.width) {
+                        x = 0;
+                        y += imageHeight + gap;
+                    }
+
+                    // If it's the last image, trigger the download
+                    if (index === imageUrls.length - 1) {
+                        downloadImage(canvas);
+                    }
+                };
+                img.crossOrigin = "Anonymous"; // Allow cross-origin access
+                img.src = url;
+            });
+        }
+
+        function downloadImage(canvas) {
+            // Trigger the download of the generated image
+            const link = document.createElement("a");
+            link.download = "mosaic-image.png"; // Set the download filename
+            link.href = canvas.toDataURL("image/png"); // Convert canvas to image URL
+            link.click(); // Simulate a click to trigger the download
+        }
+    </script>
+
+</body>
+</html>
